@@ -49,6 +49,10 @@
   }
 
   /* ---------- Chrome (header / footer) ---------- */
+  @keyframes chromeSlideDown{
+    from{ opacity:0; transform: translateY(-14px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
   .chrome-top{
     position:fixed; top:0; left:0; right:0; z-index:20;
     display:flex; align-items:center; justify-content:space-between;
@@ -60,6 +64,7 @@
     text-transform:uppercase;
     color:var(--text-dim);
     pointer-events:none;
+    animation: chromeSlideDown .7s cubic-bezier(.25,.9,.35,1) .15s both;
   }
   .chrome-top .tag{ color:var(--phosphor); }
   .chrome-top .id{ display:flex; align-items:center; gap:10px; white-space:nowrap; }
@@ -82,10 +87,17 @@
     transition:width .5s cubic-bezier(.65,0,.35,1);
   }
 
+  @keyframes chromeSlideUp{
+    from{ opacity:0; transform: translateY(14px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
   .chrome-bottom{
     position:fixed; bottom:0; left:0; right:0; z-index:20;
     display:flex; flex-direction:column; gap:8px;
-    padding:14px 28px 12px;
+    padding:14px 28px calc(12px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, rgba(10,14,15,0.92) 0%, rgba(10,14,15,0.75) 65%, rgba(10,14,15,0) 100%);
+    pointer-events:none;
+    animation: chromeSlideUp .7s cubic-bezier(.25,.9,.35,1) .15s both;
   }
   .bottom-row{
     display:flex; align-items:center; justify-content:space-between;
@@ -108,7 +120,7 @@
   .nav-dot.active polygon{ fill:var(--phosphor); stroke:var(--phosphor-bright); filter:drop-shadow(0 0 5px var(--phosphor)); }
   .nav-dot.quiz polygon{ }
 
-  .nav-arrows{ display:flex; gap:10px; pointer-events:auto; }
+  .nav-arrows{ display:flex; gap:10px; pointer-events:auto; flex-shrink:0; }
   .arrow-btn{
     font-family:var(--mono);
     font-size:12px;
@@ -135,7 +147,7 @@
   /* ---------- Stage / Slides ---------- */
   .stage{
     position:relative; z-index:5;
-    width:100vw; height:100vh;
+    width:100vw; height:100vh; height:100dvh;
     perspective: 1600px;
   }
   .slide{
@@ -300,10 +312,51 @@
   .quiz-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:10px;}
   .quiz-score{ font-family:var(--mono); font-size:13px; color:var(--text-dim); }
   .quiz-score b{ color:var(--phosphor); font-size:16px; }
-  .quiz-list{ display:flex; flex-direction:column; gap:16px; margin-top:18px; max-height:56vh; overflow-y:auto; padding-right:8px; }
-  .quiz-list::-webkit-scrollbar{ width:6px; }
-  .quiz-list::-webkit-scrollbar-thumb{ background:var(--panel-line); }
-  .qcard{ background:var(--panel); border:1px solid var(--panel-line); padding:16px 18px; }
+
+  .quiz-sticky-nav{
+    position:sticky; top:-2px; z-index:6;
+    background:linear-gradient(to bottom, var(--bg) 82%, transparent);
+    padding:6px 0 10px;
+  }
+  .quiz-progress-wrap{
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:9px;
+  }
+  .quiz-progress-track{
+    flex:1; height:5px; background:rgba(255,255,255,0.06);
+    border:1px solid var(--panel-line); overflow:hidden;
+  }
+  .quiz-progress-fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--phosphor), var(--phosphor-bright));
+    box-shadow:0 0 8px var(--phosphor);
+    transition:width .35s ease;
+  }
+  .quiz-progress-text{
+    font-family:var(--mono); font-size:11px; color:var(--text-dim);
+    white-space:nowrap; letter-spacing:0.06em;
+  }
+  .quiz-progress-text b{ color:var(--phosphor); }
+
+  .quiz-jump{ display:flex; flex-wrap:wrap; gap:5px; }
+  .qjump-btn{
+    width:23px; height:23px;
+    font-family:var(--mono); font-size:10px;
+    color:var(--text-dim); background:rgba(255,255,255,0.03);
+    border:1px solid var(--panel-line); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: all .15s ease;
+  }
+  .qjump-btn:hover{ border-color:var(--phosphor); color:var(--phosphor-bright); }
+  .qjump-btn.answered{ border-color:var(--phosphor); color:var(--phosphor); background:rgba(74,222,154,0.08); }
+
+  .quiz-list{ display:flex; flex-direction:column; gap:16px; }
+  .qcard{
+    background:var(--panel); border:1px solid var(--panel-line); padding:16px 18px;
+    scroll-margin-top:70px;
+    transition: border-color .3s ease;
+  }
+  .qcard.answered{ border-color:rgba(124,255,196,0.35); }
   .qcard .qtext{ font-size:14.5px; font-weight:600; margin-bottom:10px; color:var(--text); }
   .qcard .qtext span{ font-family:var(--mono); color:var(--phosphor); margin-right:8px; }
   .opts{ display:flex; flex-direction:column; gap:8px; }
@@ -317,7 +370,12 @@
   .opt input{ accent-color: var(--phosphor); }
   .opt.correct{ border-color:var(--phosphor); color:var(--phosphor-bright); background:rgba(74,222,154,0.08); }
   .opt.wrong{ border-color:var(--danger); color:var(--danger); background:rgba(255,107,107,0.08); }
-  .quiz-actions{ margin-top:20px; display:flex; align-items:center; gap:16px; }
+  .quiz-actions{
+    position:sticky; bottom:-4px; z-index:6;
+    margin-top:22px; padding:16px 4px 8px;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    background:linear-gradient(to top, var(--bg) 70%, transparent);
+  }
   .btn-primary{
     font-family:var(--mono); font-size:12.5px; letter-spacing:0.1em; text-transform:uppercase;
     background:var(--phosphor); color:#04160f; border:none; padding:12px 24px;
@@ -345,20 +403,25 @@
   @media (max-width: 640px){
     .chrome-top{ flex-direction:column; align-items:flex-start; padding:12px 16px; font-size:9px; row-gap:4px; }
     .chrome-top .id{ order:-1; }
-    .chrome-bottom{ padding:10px 14px 10px; }
-    .bottom-row{ justify-content:center; gap:12px; }
+    .chrome-bottom{ padding:10px 14px calc(10px + env(safe-area-inset-bottom)); }
+    .bottom-row{ justify-content:center; gap:10px 16px; }
     .nav-arrows{ order:1; }
     .counter{ order:2; }
-    .nav-dots{ order:3; }
+    .nav-dots{ display:none; }
     .footer-copy{ font-size:9px; }
-    .slide{ padding:112px 6vw 138px; }
+    .slide{ padding:112px 6vw calc(120px + env(safe-area-inset-bottom)); }
     .kbd-hint{ display:none; }
-    .arrow-btn{ padding:8px 12px; }
+    .arrow-btn{ padding:8px 12px; font-size:11px; }
   }
 
   @media (max-width: 420px){
-    .nav-dots{ display:none; }
-    .slide{ padding:100px 5vw 120px; }
+    .slide{ padding:96px 5vw calc(108px + env(safe-area-inset-bottom)); }
+    .arrow-btn{ padding:7px 10px; font-size:10px; gap:6px; }
+    .footer-copy{ font-size:8px; }
+  }
+
+  @media (max-width: 340px){
+    .arrow-btn span.label{ display:none; }
   }
 </style>
 </head>
@@ -624,10 +687,35 @@
     </div>
   </section>
 
-  <!-- 9 -->
+  <!-- 9: QUIZ -->
   <section class="slide" data-index="8">
+    <div class="slide-inner quiz-wrap">
+      <div class="eyebrow">07 · Evaluación</div>
+      <div class="quiz-head">
+        <h1 class="slide-title" style="margin-bottom:0;">Cuestionario <span>interactivo</span></h1>
+        <div class="quiz-score">Puntaje: <b id="scoreDisplay">0</b>/10 &nbsp;·&nbsp; Nota: <b id="gradeDisplay">0%</b></div>
+      </div>
+      <p class="lead" style="margin-bottom:6px;">Responda las 10 preguntas y presione "Calificar" para ver su resultado.</p>
+      <div class="quiz-sticky-nav">
+        <div class="quiz-progress-wrap">
+          <div class="quiz-progress-track"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+          <div class="quiz-progress-text"><b id="answeredCount">0</b>/10 respondidas</div>
+        </div>
+        <div class="quiz-jump" id="quizJump"></div>
+      </div>
+      <div class="quiz-list" id="quizList"></div>
+      <div class="quiz-actions">
+        <button class="btn-primary" id="gradeBtn">Calificar</button>
+        <button class="btn-ghost" id="resetBtn">Reiniciar</button>
+        <span class="result-msg" id="resultMsg"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10: Bibliografía -->
+  <section class="slide" data-index="9">
     <div class="slide-inner">
-      <div class="eyebrow">07 · Referencias</div>
+      <div class="eyebrow">08 · Referencias</div>
       <h1 class="slide-title">Bibliografía <span>(APA 7.ª ed.)</span></h1>
       <ul class="biblio-list">
         <li>Boylestad, R. L., &amp; Nashelsky, L. (2009). <em>Electrónica: teoría de circuitos y dispositivos electrónicos</em> (10.ª ed.). Pearson Educación.</li>
@@ -638,24 +726,6 @@
     </div>
   </section>
 
-  <!-- 11: QUIZ -->
-  <section class="slide" data-index="10">
-    <div class="slide-inner quiz-wrap">
-      <div class="eyebrow">08 · Evaluación</div>
-      <div class="quiz-head">
-        <h1 class="slide-title" style="margin-bottom:0;">Cuestionario <span>interactivo</span></h1>
-        <div class="quiz-score">Puntaje: <b id="scoreDisplay">0</b>/10 &nbsp;·&nbsp; Nota: <b id="gradeDisplay">0%</b></div>
-      </div>
-      <p class="lead" style="margin-bottom:6px;">Responda las 10 preguntas y presione "Calificar" para ver su resultado.</p>
-      <div class="quiz-list" id="quizList"></div>
-      <div class="quiz-actions">
-        <button class="btn-primary" id="gradeBtn">Calificar</button>
-        <button class="btn-ghost" id="resetBtn">Reiniciar</button>
-        <span class="result-msg" id="resultMsg"></span>
-      </div>
-    </div>
-  </section>
-
 </div>
 
 <div class="kbd-hint">← / → PARA NAVEGAR &nbsp;·&nbsp; ESC PARA VOLVER AL INICIO</div>
@@ -663,8 +733,8 @@
 <div class="chrome-bottom">
   <div class="bottom-row">
     <div class="nav-arrows">
-      <button class="arrow-btn" id="prevBtn">◂ ANTERIOR</button>
-      <button class="arrow-btn" id="nextBtn">SIGUIENTE ▸</button>
+      <button class="arrow-btn" id="prevBtn">◂ <span class="label">ANTERIOR</span></button>
+      <button class="arrow-btn" id="nextBtn"><span class="label">SIGUIENTE</span> ▸</button>
     </div>
     <div class="nav-dots" id="navDots"></div>
     <div class="counter"><b id="curNum">01</b> / <span id="totalNum">11</span></div>
@@ -748,6 +818,11 @@
   ];
 
   const quizList = document.getElementById('quizList');
+  const quizJump = document.getElementById('quizJump');
+  const quizProgressFill = document.getElementById('quizProgressFill');
+  const answeredCount = document.getElementById('answeredCount');
+
+  const jumpBtns = [];
   questions.forEach((item, qi) => {
     const card = document.createElement('div');
     card.className = 'qcard';
@@ -758,7 +833,31 @@
     `).join('');
     card.innerHTML = `<div class="qtext"><span>${String(qi+1).padStart(2,'0')}</span>${item.q}</div><div class="opts">${optsHtml}</div>`;
     quizList.appendChild(card);
+
+    const jumpBtn = document.createElement('button');
+    jumpBtn.className = 'qjump-btn';
+    jumpBtn.type = 'button';
+    jumpBtn.textContent = String(qi+1).padStart(2,'0');
+    jumpBtn.addEventListener('click', () => card.scrollIntoView({ behavior:'smooth', block:'center' }));
+    quizJump.appendChild(jumpBtn);
+    jumpBtns.push(jumpBtn);
   });
+
+  function updateQuizProgress(){
+    let answered = 0;
+    questions.forEach((item, qi) => {
+      const card = quizList.children[qi];
+      const isAnswered = !!document.querySelector(`input[name="q${qi}"]:checked`);
+      if(isAnswered) answered++;
+      card.classList.toggle('answered', isAnswered);
+      jumpBtns[qi].classList.toggle('answered', isAnswered);
+    });
+    answeredCount.textContent = answered;
+    quizProgressFill.style.width = (answered / questions.length * 100) + '%';
+  }
+
+  quizList.addEventListener('change', updateQuizProgress);
+  updateQuizProgress();
 
   const gradeBtn = document.getElementById('gradeBtn');
   const resetBtn = document.getElementById('resetBtn');
@@ -785,6 +884,9 @@
     resultMsg.textContent = score === 10 ? '¡Excelente! Dominio completo del tema.'
       : score >= 7 ? 'Buen resultado, revise las preguntas marcadas en rojo.'
       : 'Conviene repasar las diapositivas anteriores antes de continuar.';
+
+    const slideInner = gradeBtn.closest('.slide-inner');
+    if(slideInner) slideInner.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   resetBtn.addEventListener('click', () => {
@@ -793,6 +895,7 @@
     scoreDisplay.textContent = '0';
     gradeDisplay.textContent = '0%';
     resultMsg.textContent = '';
+    updateQuizProgress();
   });
 </script>
 </body>
